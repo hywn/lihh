@@ -57,6 +57,8 @@ global = Map.fromList
 eval :: Scope -> Parsed -> (Value, Scope)
 
 eval scope (ParseList lst) = case lst of
+	nested@(ParseList _):[] ->
+		eval scope nested
 	((ParseString "\\"):(ParseString argname):expr:[]) ->
 		( Function (\x -> fst $ eval (Map.insert argname x scope) expr)
 		, scope
@@ -87,3 +89,8 @@ repl :: String -> (Value, Scope)
 repl input = (val, env)
 	where (parseTree, _) = parse $ tokenise input
 	      (val, env) = eval global parseTree
+
+main :: IO ()
+main = do
+	text <- getContents
+	putStr $ show $ repl text

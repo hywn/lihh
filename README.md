@@ -87,6 +87,59 @@ here I used `null` to terminate the list; it can be anything
 - prefix `=`
 - an actual program
 
+## second revision/update
+new features/changes:
+- an actual program (run program with `./run.sh source.txt`)
+- cleaner code
+- expressions that contain only one expression are now evaluated to that expression
+
+### cleaner code
+to reduce number of parentheses in code, I added a cool new syntax that generates the old basic syntax.
+
+| description | syntax | equivalent basic |
+| --- | --- | --- |
+| (curried) multivariable function | `\your args here. hello` | `(\ your (\ args (\ here hello)))` |
+| left-to-right function application | `(> f a b)` | `((f a) b)` |
+| right-to-left function application | `(< f a b)` | `(f (a b))` |
+
+here's a previous example in the new syntax:
+```
+(env
+	-- boolean functions
+	(!true     \     a b. a)
+	(!false    \     a b. b)
+	(!if       \cond a b. (> cond a b))
+	(!showbool \bool    . (> bool True False))
+
+	-- pair functions (for making lists)
+	(!pair \a b getter. (> getter a b))
+	(!fst  \pair. (pair true))
+	(!snd  \pair. (pair false))
+
+	-- the Y combinator
+	(!Y \f. ((\x. (< f x x)) (\x. (< f x x))))
+
+	-- contains (which will be fed into the Y combinator)
+	(!contains \rec lst thing.
+		(> if (lst = null) false
+			(> if ((fst lst) = thing) true
+				(> rec (snd lst) thing)
+			)
+		)
+	)
+
+	-- contains that works
+	(!containsY (Y contains))
+
+	-- make a list and check if it contains apple
+	(!lst (> pair apple  null))
+	(!lst (> pair banana lst))
+	(!lst (> pair bread  lst))
+	(!lst (> pair butter lst))
+	(showbool (> containsY lst apple))
+)
+```
+
 ## poor informational background
 here is a description of relevant concepts that might be good for someone just discovering these concepts (like I am!!) but not good if you want formal correct stuff
 
