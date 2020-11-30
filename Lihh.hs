@@ -49,6 +49,7 @@ global :: Scope
 global = Map.fromList
 	[ ("_nl", Str "\n")
 	, ("_space", Str " ")
+	, ("_empty", Str "")
 	]
 
 fst3 :: (a, b, c) -> a

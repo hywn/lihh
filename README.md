@@ -152,6 +152,7 @@ changelog:
 - added some special symbols for hard-to-input strings
 	- `_space` is `" "`
 	- `_nl` is `"\n"`
+	- `_empty` is `""`
 
 example program that prints lists (by first generating a string)
 ```
