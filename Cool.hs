@@ -21,7 +21,7 @@ pH :: Parser Char
 pH = oneOf " \t\n"
 
 pSymbol :: Parser Parsed
-pSymbol = liftM Symbol $ many1 (letter <|> char '=')
+pSymbol = liftM Symbol $ many1 (letter <|> char '=' <|> char '_')
 
 pApp :: Parser Parsed
 pApp = liftM List $ sepEndBy pExpr $ many1 pH

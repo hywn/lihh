@@ -35,7 +35,6 @@ data Value
 	= Function (Value -> Value)
 	| Str String
 	| Void
-
 instance Show Value where
 	show (Function _) = "function"
 	show (Str s) = s
@@ -48,49 +47,75 @@ type Scope = Map.Map String Value
 
 global :: Scope
 global = Map.fromList
-	[
+	[ ("_nl", Str "\n")
+	, ("_space", Str " ")
 	]
 
--- ((\ a (\ b a)) hello bro) -> hello
--- ((\ a (a)) hello)
+fst3 :: (a, b, c) -> a
+fst3 (a, b, c) = a
 
-eval :: Scope -> Parsed -> (Value, Scope)
+eval :: Scope -> Parsed -> (Value, Scope, IO ())
 
 eval scope (ParseList lst) = case lst of
+	-- evaluated singleton lists as the contained list
 	nested@(ParseList _):[] ->
 		eval scope nested
+
+	-- print the argument
+	((ParseString "_print"):x:[]) ->
+		( Void, scope,putStr $ show res)
+		where (res, _, _) = eval scope x
+
+	-- make a function
 	((ParseString "\\"):(ParseString argname):expr:[]) ->
-		( Function (\x -> fst $ eval (Map.insert argname x scope) expr)
+		( Function (\x -> fst3 $ eval (Map.insert argname x scope) expr)
 		, scope
+		, return ()
 		)
+
+	-- bind something to a symbol in current scope
 	((ParseString "!") : (ParseString bindname):expr:[]) ->
 		( Void
-		, Map.insert bindname (fst $ eval scope expr) scope
+		, Map.insert bindname (fst3 $ eval scope expr) scope
+		, return ()
 		)
+
+	-- check equality
 	(a:(ParseString "="):b:[]) ->
 		if   x == y
 		then eval scope (ParseString "true")
 		else eval scope (ParseString "false")
-		where (x, _) = eval scope a
-		      (y, _) = eval scope b
-	((ParseString "env"):rest) ->
-		foldl (\(_, scop) thing -> eval scop thing) (Void, scope) rest
-	(a:b:[]) -> (val, scope)
+		where (x, _, _) = eval scope a
+		      (y, _, _) = eval scope b
+
+	((ParseString "_concat"):a:b:[]) ->
+		(Str $ (show x) ++ (show y), scope, return ())
+		where (x, _, _) = eval scope a
+		      (y, _, _) = eval scope b
+
+	-- gather scope modifications and IO effects
+	((ParseString "_env"):rest) ->
+		foldl after (Void, scope, return ()) rest
+		where after (_, oldscope, oldio) thing = (newval, newscope, oldio >> newio)
+			where (newval, newscope, newio) = eval oldscope thing
+
+	-- evaluate a function
+	(a:b:[]) -> (val, scope, return ())
 		where val = case eval scope a of
-			(Function f, _) -> f x
+			(Function f, _, _) -> f x
 			_ -> undefined
-			where (x, _) = eval scope b
+			where (x, _, _) = eval scope b
 
 eval scope (ParseString s) = case Map.lookup s scope of
-	Just val -> (val, scope)
-	Nothing  -> (Str s, scope)
+	Just val -> (val, scope, return ())
+	Nothing  -> (Str s, scope, return ())
 
-repl :: String -> (Value, Scope)
-repl input = (val, env)
+repl :: String -> (Value, Scope, IO ())
+repl input = eval global parseTree
 	where (parseTree, _) = parse $ tokenise input
-	      (val, env) = eval global parseTree
 
 main :: IO ()
 main = do
 	text <- getContents
-	putStr $ show $ repl text
+	let (val, scope, io) = repl text
+	io

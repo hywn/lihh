@@ -87,11 +87,11 @@ here I used `null` to terminate the list; it can be anything
 - prefix `=`
 - an actual program
 
-## second revision/update
+## second revision/update: syntactic sugar preprocessor
 new features/changes:
 - an actual program (run program with `./run.sh source.txt`)
 - cleaner code
-- expressions that contain only one expression are now evaluated to that expression
+- list expressions that contain only one list expression are now evaluated to that expression
 
 ### cleaner code
 to reduce number of parentheses in code, I added a cool new syntax that generates the old basic syntax.
@@ -137,6 +137,50 @@ here's a previous example in the new syntax:
 	(!lst (> pair bread  lst))
 	(!lst (> pair butter lst))
 	(showbool (> containsY lst apple))
+)
+```
+
+## third revision/update: printing strings
+
+changelog:
+- renamed `env` to `_env` to fit with naming convention
+- added top-level `_print`ing
+	- `_print`s in the highest level produce IO effects
+	- for all practical purposes, the top-level `_env`
+	- could technically add nested prints, but imo is better suited to keep weird hacky stuff to `_env`
+- added `_concat` to concat symbols into a string (does not produce a symbol, e.g. `(_concat tr ue)` will not further evaluate into the actual `true` function)
+- added some special symbols for hard-to-input strings
+	- `_space` is `" "`
+	- `_nl` is `"\n"`
+
+example program that prints lists (by first generating a string)
+```
+(_env
+	(!true     \     a b. a)
+	(!false    \     a b. b)
+	(!if       \cond a b. (> cond a b))
+	(!showbool \bool    . (> bool True False))
+
+	(!pair \a b getter. (> getter a b))
+	(!fst  \pair. (pair true))
+	(!snd  \pair. (pair false))
+
+	(!Y \f. ((\x. (< f x x)) (\x. (< f x x))))
+
+	(!spaced \a b. (_concat (_concat a _space) b))
+
+	(!plist (Y (\rec lst.
+		(> if (lst = null) null
+			(> spaced (fst lst) (> rec (snd lst)))
+		)
+	)))
+
+	(!lst (> pair apple  null))
+	(!lst (> pair banana lst))
+	(!lst (> pair bread  lst))
+	(!lst (> pair butter lst))
+
+	(_print (plist lst))
 )
 ```
 
