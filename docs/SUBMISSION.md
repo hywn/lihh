@@ -65,7 +65,7 @@ that's basically everything; there are no built-in booleans, numbers, lists, etc
 # examples
 though lihh might not seem very impressive, it's quite capable of cool things with not much code.
 
-[`./examples/](./examples/)` contains some examples written in extended syntax. they can be run as-is with `test.sh`.
+[`./examples/`](./examples/) contains some examples written in extended syntax. they can be run as-is with `test.sh`.
 
 - [`./examples/num.txt`](./examples/num.txt): church numerals
 - [`./examples/mfr.txt`](./examples/mfr.txt): lists: map, filter, and reduce (foldl)
