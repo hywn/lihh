@@ -1,0 +1,108 @@
+(_env
+	--------------------------------------------------------------------------
+	--- example implementations of map, filter, and reduce (foldl) in lihh ---
+	--------------------------------------------------------------------------
+
+	-- boilerplate boolean stuff
+	(!true     \     a b. a)
+	(!false    \     a b. b)
+	(!not      \bool    . (> bool false true))
+	(!and      \     a b. (> a b false))
+	(!or       \     a b. (> a true b))
+	(!if       \cond a b. (> cond a b))
+	(!showbool \bool    . (> bool True False))
+
+	-- boilerplate list/pair stuff
+	(!pair \a b getter. (> getter a b))
+	(!fst  \pair. (pair true))
+	(!snd  \pair. (pair false))
+
+	-- Y combinator
+	(!Y \f. ((\x. (< f x x)) (\x. (< f x x))))
+
+	-- boilerplate printing util
+	(!spaced \a b. (_concat (_concat a _space) b))
+	(!plist (Y (\rec lst.
+		(> if (lst = null) null
+			(> spaced (fst lst) (> rec (snd lst)))
+		)
+	)))
+
+	-- make a list
+	(!lst (> pair apple  null))
+	(!lst (> pair banana lst))
+	(!lst (> pair bread  lst))
+	(!lst (> pair butter lst))
+
+	-- print list
+	(_print (plist lst)) --> butter bread banana apple null
+	(_print _nl)
+
+	-- map
+	(!map (Y (\rec f lst.
+		(> if (lst = null) null -- base case
+			(> pair (< f fst lst) (> rec f (snd lst))) -- apply f to first and recurse
+		)
+	)))
+
+	-- make silly function to demonstrate map
+	(!check_if_banana \a. (> if (a = banana) this_is_banana this_is_not_banana))
+
+	(_print (plist (> map check_if_banana lst))) --> this_is_not_banana this_is_not_banana this_is_banana this_is_not_banana null
+	(_print _nl)
+
+	-- could also map everything to a boolean
+	-- note that builtins are not curried, unfortunately, so have to make our own curry
+	(!curried_eq \a b. (a = b))
+
+	(_print (plist (> map (curried_eq banana) lst))) --> function function function function null
+	(_print _nl)
+
+	-- but booleans are actually just functions, so we have to apply showbool to everything to actually see them
+	(_print (plist (> map showbool (> map (curried_eq banana) lst)))) --> False False True False null
+	(_print _nl)
+
+	-- filter
+	(!filter (Y (\rec f lst.
+		-- base case
+		(> if (lst = null) null
+			-- if f is true for first, include and recurse
+			(> if (< f fst lst) (> pair (fst lst) (> rec f (snd lst)))
+				-- if f is false for first, discard and recurse
+				(> rec f (snd lst))
+			)
+		)
+	)))
+
+	-- filter by is banana?
+	(_print (plist (> filter (curried_eq banana) lst))) --> banana null
+	(_print _nl)
+
+	-- filter by is not banana?
+	(_print (plist (> filter (\a. (not (a = banana))) lst))) --> butter bread apple null
+	(_print _nl)
+
+	-- filter by is sandwich?
+	(_print (plist (> filter (curried_eq sandwich) lst))) --> null
+	(_print _nl)
+
+	-- reduce (foldl)
+	(!foldl (Y (\rec f z lst.
+		-- base case
+		(> if (lst = null) z
+			-- combine z with first element and recurse
+			(> rec f (> f z (fst lst)) (snd lst))
+		)
+	)))
+
+	-- are any true in this list? (partial application)
+	(!any (> foldl or false))
+
+	-- are any equal to banana?
+	(_print (showbool (any (> map (curried_eq banana) lst)))) --> True
+	(_print _nl)
+
+	-- are any equal to sandwich?
+	(_print (showbool (any (> map (curried_eq sandwich) lst)))) --> False
+	(_print _nl)
+)

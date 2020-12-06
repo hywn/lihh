@@ -1,0 +1,34 @@
+(_env
+	-------------------------------
+	--- church numerals in lihh ---
+	-------------------------------
+
+	-- church numerals are applying a function `f` to `a` some amount of times
+	-- so zero is applying a function zero times:
+	(!zero \f a. a)
+
+	-- zero was like the base case; every other number is defined as a successor
+	(!succ \n f a. (f (> n f a))) -- the successor to n is applying f one more time
+
+	--(_print (> zero aa ba))
+
+	-- we can make some test numbers to see if it worked
+	(!one (succ zero))
+	(!four (< succ succ succ succ zero))
+
+	(!postfix \a b. (_concat b a))
+	-- function that shows a number by repeatedly postfixing the empty string with `i`s
+	(!shownum \n. (> n (postfix i) _empty))
+
+	(_print (shownum one)) --> i
+	(_print _nl)
+
+	(_print (shownum four)) --> iiii
+	(_print _nl)
+
+	-- now we can do stuff like add
+	(!add \a b. (> a succ b)) -- adding a to b is just succing a b more times
+
+	(_print (shownum (> add four four))) --> iiiiiiii
+	(_print _nl)
+)
